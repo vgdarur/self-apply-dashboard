@@ -7,6 +7,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import LoginPage from "@/pages/login";
 import Dashboard from "@/pages/dashboard";
+import AdminPage from "@/pages/admin";
 import NotFound from "@/pages/not-found";
 import { type AuthUser, setToken, clearToken, getToken } from "@/lib/auth";
 
@@ -23,6 +24,7 @@ function AuthenticatedApp() {
   const [isLoading, setIsLoading] = useState(false);
   const [loginError, setLoginError] = useState<string | null>(null);
   const [checkingAuth, setCheckingAuth] = useState(true);
+  const [showAdmin, setShowAdmin] = useState(false);
 
   // Check if we have a valid session on mount
   useEffect(() => {
@@ -101,7 +103,11 @@ function AuthenticatedApp() {
     return <LoginPage onLogin={handleLogin} isLoading={isLoading} error={loginError} />;
   }
 
-  return <Dashboard user={user} onLogout={handleLogout} />;
+  if (showAdmin && user.isAdmin) {
+    return <AdminPage user={user} onBack={() => setShowAdmin(false)} />;
+  }
+
+  return <Dashboard user={user} onLogout={handleLogout} onAdmin={user.isAdmin ? () => setShowAdmin(true) : undefined} />;
 }
 
 function AppRouter() {

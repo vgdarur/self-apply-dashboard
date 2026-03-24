@@ -35,10 +35,12 @@ export type Agent = typeof agents[number];
 // Email to agent mapping for access control
 export const emailToAgentMap: Record<string, string[]> = {
   "vgdarur@gmail.com": ["krishnaja1", "udayja1", "shasheeja1", "rajja1", "dunteesja1", "purvaja1", "ramanaja1"], // admin sees all
+  "chitturiuday@gmail.com": ["udayja1"],
   "shashidevops6@gmail.com": ["shasheeja1"],
   "rajavamshisvln@gmail.com": ["rajja1"],
   "dunti0001@gmail.com": ["dunteesja1"],
   "purvat.111@gmail.com": ["purvaja1"],
+  "karetiramanakumar@gmail.com": ["ramanaja1"],
 };
 
 export const adminEmails = ["vgdarur@gmail.com"];

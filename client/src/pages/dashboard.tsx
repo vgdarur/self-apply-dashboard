@@ -14,11 +14,13 @@ import {
   ChevronDown,
   Users,
   Filter,
+  Shield,
 } from "lucide-react";
 
 interface DashboardProps {
   user: AuthUser;
   onLogout: () => void;
+  onAdmin?: () => void;
 }
 
 const agentColorMap: Record<string, string> = {
@@ -88,7 +90,7 @@ function StatusBadge({
   );
 }
 
-export default function Dashboard({ user, onLogout }: DashboardProps) {
+export default function Dashboard({ user, onLogout, onAdmin }: DashboardProps) {
   const [selectedAgent, setSelectedAgent] = useState<string>("all");
   const [statusFilter, setStatusFilter] = useState<string>("all");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -225,7 +227,27 @@ export default function Dashboard({ user, onLogout }: DashboardProps) {
         )}
 
         {/* User profile at bottom */}
-        <div className="border-t border-sidebar-border p-3">
+        <div className="border-t border-sidebar-border p-3 space-y-2">
+          {/* Admin button — only shown to admin users */}
+          {onAdmin && !sidebarCollapsed && (
+            <button
+              onClick={onAdmin}
+              className="w-full flex items-center gap-2 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/20 transition-colors border border-primary/20"
+              data-testid="button-admin"
+            >
+              <Shield className="w-3.5 h-3.5 shrink-0" />
+              Admin Panel
+            </button>
+          )}
+          {onAdmin && sidebarCollapsed && (
+            <button
+              onClick={onAdmin}
+              className="w-full flex items-center justify-center p-2 rounded-lg bg-primary/10 text-primary hover:bg-primary/20 transition-colors"
+              title="Admin Panel"
+            >
+              <Shield className="w-3.5 h-3.5" />
+            </button>
+          )}
           <div className="flex items-center gap-2">
             {user.picture ? (
               <img

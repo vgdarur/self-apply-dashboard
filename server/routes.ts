@@ -4,6 +4,9 @@ import { storage } from "./storage";
 import { emailToAgentMap, adminEmails, jobStatuses, agents } from "@shared/schema";
 import { OAuth2Client } from "google-auth-library";
 
+// Mutable in-memory copy of email→agent mappings (seeded from schema)
+const liveEmailToAgentMap: Record<string, string[]> = { ...emailToAgentMap };
+
 const GOOGLE_CLIENT_ID = "829752059628-cb29j0ra1l8litg13a1pnl900brkki1q.apps.googleusercontent.com";
 const oauthClient = new OAuth2Client(GOOGLE_CLIENT_ID);
 
@@ -15,7 +18,7 @@ function getAgentsForEmail(email: string): string[] {
   if (adminEmails.includes(lower)) {
     return agents.map(a => a.id);
   }
-  return emailToAgentMap[lower] || [];
+  return liveEmailToAgentMap[lower] || [];
 }
 
 function isAdmin(email: string): boolean {
@@ -151,6 +154,63 @@ export async function registerRoutes(
 
     const result = await storage.getJobsByAgents(allowedAgents);
     return res.json(result);
+  });
+
+  // ── Admin: get all email→agent mappings ──────────────────────────────
+  app.get("/api/admin/mappings", (req, res) => {
+    const user = getSessionUser(req);
+    if (!user || !isAdmin(user.email)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+    // Return as array for easy UI rendering
+    const rows = Object.entries(liveEmailToAgentMap).map(([email, agentIds]) => ({ email, agentIds }));
+    return res.json({ mappings: rows, agents: agents.map(a => ({ id: a.id, name: a.name })) });
+  });
+
+  // ── Admin: update all mappings (full replace) ─────────────────────────
+  app.put("/api/admin/mappings", (req, res) => {
+    const user = getSessionUser(req);
+    if (!user || !isAdmin(user.email)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+    const { mappings } = req.body as { mappings: { email: string; agentIds: string[] }[] };
+    if (!Array.isArray(mappings)) {
+      return res.status(400).json({ error: "mappings must be an array" });
+    }
+    // Clear and rebuild
+    for (const key of Object.keys(liveEmailToAgentMap)) delete liveEmailToAgentMap[key];
+    for (const { email, agentIds } of mappings) {
+      if (email) liveEmailToAgentMap[email.toLowerCase().trim()] = agentIds;
+    }
+    return res.json({ ok: true });
+  });
+
+  // ── Admin: add single mapping ─────────────────────────────────────────
+  app.post("/api/admin/mappings", (req, res) => {
+    const user = getSessionUser(req);
+    if (!user || !isAdmin(user.email)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+    const { email, agentIds } = req.body as { email: string; agentIds: string[] };
+    if (!email || !Array.isArray(agentIds)) {
+      return res.status(400).json({ error: "email and agentIds required" });
+    }
+    liveEmailToAgentMap[email.toLowerCase().trim()] = agentIds;
+    return res.json({ ok: true });
+  });
+
+  // ── Admin: delete a mapping ───────────────────────────────────────────
+  app.delete("/api/admin/mappings/:email", (req, res) => {
+    const user = getSessionUser(req);
+    if (!user || !isAdmin(user.email)) {
+      return res.status(403).json({ error: "Admin only" });
+    }
+    const email = decodeURIComponent(req.params.email).toLowerCase();
+    if (adminEmails.includes(email)) {
+      return res.status(400).json({ error: "Cannot remove admin mapping" });
+    }
+    delete liveEmailToAgentMap[email];
+    return res.json({ ok: true });
   });
 
   // Update job status
