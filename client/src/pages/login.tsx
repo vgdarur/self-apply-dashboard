@@ -1,7 +1,7 @@
 import { useEffect, useRef, useCallback } from "react";
 import { PerplexityAttribution } from "@/components/PerplexityAttribution";
 
-const GOOGLE_CLIENT_ID = "829752059628-cb29j0ra1l8litg13a1pnl900brkki1q.apps.googleusercontent.com";
+const GOOGLE_CLIENT_ID = "19615734221-469n6ahpnd9oocr1en0jo9s737l1f8eo.apps.googleusercontent.com";
 
 declare global {
   interface Window {
